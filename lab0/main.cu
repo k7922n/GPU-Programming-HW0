@@ -12,8 +12,18 @@
 
 __global__ void SomeTransform(char *input_gpu, int fsize) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	if (idx < fsize and input_gpu[idx] != '\n') {
+	if (idx < fsize && input_gpu[idx] != '\n') {
 		input_gpu[idx] = '!';
+	}
+}
+
+__global__ void MyTransform(char *input_gpu, int fsize) {
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	if (idx < fsize && input_gpu[idx] != '\n') {
+		if(int(input_gpu[idx]) > 64 && input_gpu[idx] < 91)
+			{input_gpu[idx] = char(int(input_gpu[idx]) + 32);}
+		else if(int(input_gpu[idx]) > 96 && input_gpu[idx] < 123)
+			{input_gpu[idx] = char(int(input_gpu[idx]) - 32);}
 	}
 }
 
@@ -25,7 +35,7 @@ int main(int argc, char **argv)
 		abort();
 	}
 	FILE *fp = fopen(argv[1], "r");
-	if (not fp) {
+	if (! fp) {
 		printf("Cannot open %s", argv[1]);
 		abort();
 	}
@@ -47,8 +57,10 @@ int main(int argc, char **argv)
 	// An example: transform the first 64 characters to '!'
 	// Don't transform over the tail
 	// And don't transform the line breaks
-	SomeTransform<<<2, 32>>>(input_gpu, fsize);
-
+	//SomeTransform<<<100, 64>>>(input_gpu, fsize);
+	
+	//MyTransform turns the lower case into upper case and turns the upper case into lower one
+	MyTransform<<<100, 64>>>(input_gpu, fsize);
 	puts(text_smem.get_cpu_ro());
 	return 0;
 }
